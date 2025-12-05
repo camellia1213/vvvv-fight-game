@@ -1,0 +1,921 @@
+Skill.java
+/**
+ * 技能类
+ * 表示角色的攻击技能
+ */
+public class Skill {
+    private String name;          // 技能名称
+    private String description;   // 技能描述
+    private int cooldown;         // 冷却时间（回合）
+    private int currentCooldown;  // 当前冷却时间
+    private int damage;           // 伤害值
+    private boolean isUltimate;   // 是否是大招
+    
+    /**
+     * 构造函数
+     */
+    public Skill(String name, String description, int damage, int cooldown, boolean isUltimate) {
+        this.name = name;
+        this.description = description;
+        this.damage = damage;
+        this.cooldown = cooldown;
+        this.currentCooldown = 0;
+        this.isUltimate = isUltimate;
+    }
+    
+    /**
+     * 发动技能
+     * @return 技能造成的伤害
+     */
+    public int activate() {
+        if (currentCooldown > 0) {
+            return 0; // 技能还在冷却中
+        }
+        
+        if (isUltimate) {
+            currentCooldown = cooldown; // 大招需要冷却
+        }
+        
+        return damage;
+    }
+    
+    /**
+     * 更新冷却时间
+     */
+    public void updateCooldown() {
+        if (currentCooldown > 0) {
+            currentCooldown--;
+        }
+    }
+    
+    /**
+     * 检查技能是否可用
+     */
+    public boolean isAvailable() {
+        return currentCooldown == 0;
+    }
+    
+    // Getter方法
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public int getDamage() { return damage; }
+    public int getCurrentCooldown() { return currentCooldown; }
+    public boolean isUltimate() { return isUltimate; }
+    
+    /**
+     * 显示技能信息
+     */
+    public void displayInfo() {
+        String status = isAvailable() ? "可用" : "冷却中(" + currentCooldown + "回合)";
+        System.out.println(name + " - " + description);
+        System.out.println("  伤害: " + damage + " 状态: " + status);
+    }
+}
+
+
+
+Agent
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 英雄类
+ * 表示可选择的游戏角色
+ */
+public class Agent {
+    private String name;                    // 英雄名称
+    private Skill signatureSkill;          // 普通技能
+    private Skill ultimateSkill;           // 大招技能
+    
+    /**
+     * 构造函数
+     */
+    public Agent(String name, Skill signatureSkill, Skill ultimateSkill) {
+        this.name = name;
+        this.signatureSkill = signatureSkill;
+        this.ultimateSkill = ultimateSkill;
+    }
+    
+    /**
+     * 获取所有技能列表
+     */
+    public List<Skill> getSkills() {
+        List<Skill> skills = new ArrayList<>();
+        skills.add(signatureSkill);
+        skills.add(ultimateSkill);
+        return skills;
+    }
+    
+    /**
+     * 使用普通攻击
+     */
+    public int useSignatureSkill() {
+        return signatureSkill.activate();
+    }
+    
+    /**
+     * 使用大招
+     */
+    public int useUltimateSkill() {
+        return ultimateSkill.activate();
+    }
+    
+    /**
+     * 防御动作（所有英雄通用）
+     */
+    public void defend() {
+        System.out.println(name + " 进入防御状态，可以抵挡30点伤害！");
+    }
+    
+    /**
+     * 更新所有技能冷却时间
+     */
+    public void updateCooldowns() {
+        signatureSkill.updateCooldown();
+        ultimateSkill.updateCooldown();
+    }
+    
+    // Getter方法
+    public String getName() { return name; }
+    public Skill getSignatureSkill() { return signatureSkill; }
+    public Skill getUltimateSkill() { return ultimateSkill; }
+    
+    /**
+     * 显示英雄信息
+     */
+    public void displayInfo() {
+        System.out.println("\n=== " + name + " ===");
+        System.out.println("普通攻击:");
+        signatureSkill.displayInfo();
+        System.out.println("大招:");
+        ultimateSkill.displayInfo();
+    }
+}
+
+
+NPC
+import java.util.Random;
+
+/**
+ * NPC类
+ * 表示游戏中的敌人
+ */
+public class NPC {
+    private String name;        // NPC名称
+    private int health;         // 生命值
+    private Skill skill;        // 拥有的技能
+    private Random random;      // 随机数生成器
+    
+    /**
+     * 构造函数
+     */
+    public NPC(String name, int health) {
+        this.name = name;
+        this.health = health;
+        this.random = new Random();
+        
+        // NPC使用固定伤害技能
+        this.skill = new Skill("普通攻击", "造成30点伤害", 30, 0, false);
+    }
+    
+    /**
+     * NPC行动
+     * @param target 攻击目标
+     * @return 造成的伤害
+     */
+    public int act(Player target) {
+        // NPC随机选择行动（目前只有攻击）
+        int action = random.nextInt(3); // 0-2的随机数
+        
+        switch(action) {
+            case 0:
+                System.out.println(name + " 发动攻击！");
+                return skill.activate();
+            case 1:
+                System.out.println(name + " 准备攻击...");
+                return skill.activate();
+            case 2:
+                System.out.println(name + " 咆哮着冲过来！");
+                return skill.activate();
+            default:
+                return 0;
+        }
+    }
+    
+    /**
+     * 受到伤害
+     */
+    public void takeDamage(int damage) {
+        health -= damage;
+        if (health < 0) health = 0;
+        System.out.println(name + " 受到 " + damage + " 点伤害，剩余生命值: " + health);
+    }
+    
+    /**
+     * 检查是否存活
+     */
+    public boolean isAlive() {
+        return health > 0;
+    }
+    
+    // Getter方法
+    public String getName() { return name; }
+    public int getHealth() { return health; }
+    
+    /**
+     * 显示NPC信息
+     */
+    public void displayInfo() {
+        System.out.println("\n敌人: " + name);
+        System.out.println("生命值: " + health);
+    }
+}
+
+Player
+/**
+ * 玩家类
+ * 表示游戏玩家
+ */
+public class Player {
+    private String name;           // 玩家名称
+    private int health;            // 当前生命值
+    private int maxHealth;         // 最大生命值
+    private Agent selectedAgent;   // 选择的英雄
+    private boolean isDefending;   // 是否处于防御状态
+    
+    /**
+     * 构造函数
+     */
+    public Player(String name, int maxHealth) {
+        this.name = name;
+        this.maxHealth = maxHealth;
+        this.health = maxHealth;  // 初始化为满血
+        this.isDefending = false;
+    }
+    
+    /**
+     * 重置玩家状态
+     * 用于开始新的战斗时重置
+     */
+    public void resetForNewBattle() {
+        this.health = maxHealth;  // 恢复满血
+        this.isDefending = false; // 取消防御状态
+        System.out.println(name + " 的生命值已重置为 " + health + "/" + maxHealth);
+    }
+    
+    /**
+     * 重置玩家全部状态（包括英雄选择）
+     */
+    public void resetCompletely() {
+        this.health = maxHealth;
+        this.isDefending = false;
+        this.selectedAgent = null;
+        System.out.println(name + " 的状态已完全重置");
+    }
+    
+    /**
+     * 选择英雄
+     */
+    public void selectAgent(Agent agent) {
+        this.selectedAgent = agent;
+        System.out.println(name + " 选择了英雄: " + agent.getName());
+    }
+    
+    /**
+     * 使用普通攻击
+     */
+    public int useSignatureSkill() {
+        if (selectedAgent == null) {
+            System.out.println("请先选择英雄！");
+            return 0;
+        }
+        return selectedAgent.useSignatureSkill();
+    }
+    
+    /**
+     * 使用大招
+     */
+    public int useUltimateSkill() {
+        if (selectedAgent == null) {
+            System.out.println("请先选择英雄！");
+            return 0;
+        }
+        return selectedAgent.useUltimateSkill();
+    }
+    
+    /**
+     * 防御
+     */
+    public void defend() {
+        isDefending = true;
+        if (selectedAgent != null) {
+            selectedAgent.defend();
+        } else {
+            System.out.println(name + " 进入防御状态！");
+        }
+    }
+    
+    /**
+     * 受到伤害
+     */
+    public void takeDamage(int damage) {
+        if (isDefending) {
+            damage -= 30; // 防御减少30点伤害
+            if (damage < 0) damage = 0;
+            System.out.println("防御抵挡了30点伤害！");
+            isDefending = false; // 防御状态只持续一回合
+        }
+        
+        health -= damage;
+        if (health < 0) health = 0;
+        System.out.println(name + " 受到 " + damage + " 点伤害，剩余生命值: " + health + "/" + maxHealth);
+    }
+    
+    /**
+     * 更新英雄技能冷却时间
+     */
+    public void updateAgentCooldowns() {
+        if (selectedAgent != null) {
+            selectedAgent.updateCooldowns();
+        }
+    }
+    
+    /**
+     * 检查是否存活
+     */
+    public boolean isAlive() {
+        return health > 0;
+    }
+    
+    /**
+     * 治疗（可选功能）
+     */
+    public void heal(int amount) {
+        health += amount;
+        if (health > maxHealth) {
+            health = maxHealth;
+        }
+        System.out.println(name + " 恢复了 " + amount + " 点生命值，当前生命值: " + health + "/" + maxHealth);
+    }
+    
+    // Getter方法
+    public String getName() { return name; }
+    public int getHealth() { return health; }
+    public int getMaxHealth() { return maxHealth; }
+    public Agent getSelectedAgent() { return selectedAgent; }
+    public boolean isDefending() { return isDefending; }
+    
+    /**
+     * 显示玩家信息
+     */
+    public void displayInfo() {
+        System.out.println("\n=== 玩家信息 ===");
+        System.out.println("名称: " + name);
+        System.out.println("生命值: " + health + "/" + maxHealth);
+        System.out.println("防御状态: " + (isDefending ? "是" : "否"));
+        if (selectedAgent != null) {
+            System.out.println("当前英雄: " + selectedAgent.getName());
+        }
+    }
+}
+
+
+
+Scene
+/**
+ * 场景类（抽象类）
+ * 表示游戏中的不同场景
+ */
+public abstract class Scene {
+    protected String name;        // 场景名称
+    protected String description; // 场景描述
+    
+    /**
+     * 构造函数
+     */
+    public Scene(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+    
+    /**
+     * 进入场景
+     */
+    public void enter() {
+        System.out.println("\n=== 进入 " + name + " ===");
+        System.out.println(description);
+    }
+    
+    /**
+     * 处理命令（抽象方法）
+     */
+    public abstract void handleCommand(String command, Player player, Game game);
+    
+    /**
+     * 显示场景选项
+     */
+    public abstract void displayOptions();
+    
+    // Getter方法
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+}
+
+
+
+
+TrainingScene
+import java.util.Scanner;
+
+/**
+ * 训练场景类
+ * 用于练习英雄技能
+ */
+public class TrainingScene extends Scene {
+    private Scanner scanner;
+    
+    /**
+     * 构造函数
+     */
+    public TrainingScene() {
+        super("训练场", "在这里你可以选择喜欢的英雄进行训练，熟悉他们的技能！");
+        this.scanner = new Scanner(System.in);
+    }
+    
+    /**
+     * 显示场景选项
+     */
+    @Override
+    public void displayOptions() {
+        System.out.println("\n=== 训练场选项 ===");
+        System.out.println("1. 选择英雄洁雨");
+        System.out.println("2. 选择英雄雷纳");
+        System.out.println("3. 练习普通攻击");
+        System.out.println("4. 练习大招");
+        System.out.println("5. 返回主菜单");
+        System.out.print("请选择: ");
+    }
+    
+    /**
+     * 处理命令
+     */
+    @Override
+    public void handleCommand(String command, Player player, Game game) {
+        switch(command) {
+            case "1":
+                selectJieyu(player);
+                break;
+            case "2":
+                selectLeina(player);
+                break;
+            case "3":
+                practiceSignatureSkill(player);
+                break;
+            case "4":
+                practiceUltimateSkill(player);
+                break;
+            case "5":
+                game.switchToMainMenu();
+                break;
+            default:
+                System.out.println("无效的选择！");
+        }
+    }
+    
+    /**
+     * 选择英雄洁雨
+     */
+    private void selectJieyu(Player player) {
+        Skill rainDrop = new Skill("雨滴攻击", "往敌人身上丢雨滴，命中一滴使敌人掉30滴血", 30, 0, false);
+        Skill glassRain = new Skill("玻璃雨", "在敌人头顶形成一片云，开始下玻璃雨", 60, 2, true);
+        Agent jieyu = new Agent("洁雨", rainDrop, glassRain);
+        
+        player.selectAgent(jieyu);
+        jieyu.displayInfo();
+    }
+    
+    /**
+     * 选择英雄雷纳
+     */
+    private void selectLeina(Player player) {
+        Skill demonEye = new Skill("恶魔之眼", "丢一个恶魔之眼，可以让敌人掉30滴血", 30, 0, false);
+        Skill bloodSuck = new Skill("吸血", "吸掉敌人身上60滴血", 60, 2, true);
+        Agent leina = new Agent("雷纳", demonEye, bloodSuck);
+        
+        player.selectAgent(leina);
+        leina.displayInfo();
+    }
+    
+    /**
+     * 练习普通攻击
+     */
+    private void practiceSignatureSkill(Player player) {
+        if (player.getSelectedAgent() == null) {
+            System.out.println("请先选择英雄！");
+            return;
+        }
+        
+        System.out.println("\n练习普通攻击...");
+        int damage = player.useSignatureSkill();
+        if (damage > 0) {
+            System.out.println("造成 " + damage + " 点伤害！");
+        } else {
+            System.out.println("攻击失败或技能冷却中！");
+        }
+        
+        // 创建一个训练用的NPC
+        NPC trainingDummy = new NPC("训练假人", 100);
+        trainingDummy.takeDamage(damage);
+    }
+    
+    /**
+     * 练习大招
+     */
+    private void practiceUltimateSkill(Player player) {
+        if (player.getSelectedAgent() == null) {
+            System.out.println("请先选择英雄！");
+            return;
+        }
+        
+        System.out.println("\n练习大招...");
+        int damage = player.useUltimateSkill();
+        if (damage > 0) {
+            System.out.println("造成 " + damage + " 点伤害！");
+            
+            // 创建一个训练用的NPC
+            NPC trainingDummy = new NPC("训练假人", 100);
+            trainingDummy.takeDamage(damage);
+            
+            // 更新冷却时间（模拟一回合）
+            player.updateAgentCooldowns();
+        } else {
+            System.out.println("大招还在冷却中！");
+        }
+    }
+}
+
+
+
+
+CombatScene
+import java.util.Scanner;
+
+/**
+ * 战斗场景类
+ * 用于实战战斗
+ */
+public class CombatScene extends Scene {
+    private Scanner scanner;
+    private NPC currentNPC;  // 当前对战的NPC
+    private int roundCount;  // 回合计数
+    
+    /**
+     * 构造函数
+     */
+    public CombatScene() {
+        super("实战场景", "在这里你将面对各种敌人，只能选择一个英雄进行战斗！");
+        this.scanner = new Scanner(System.in);
+        this.roundCount = 1;
+    }
+    
+    /**
+     * 进入场景（重写方法）
+     */
+    @Override
+    public void enter() {
+        super.enter(); // 调用父类的enter方法
+    }
+    
+    /**
+     * 显示场景选项
+     */
+    @Override
+    public void displayOptions() {
+        System.out.println("\n=== 第 " + roundCount + " 回合 ===");
+        System.out.println("1. 选择敌人（开始新战斗）");
+        System.out.println("2. 普通攻击");
+        System.out.println("3. 使用大招");
+        System.out.println("4. 防御");
+        System.out.println("5. 查看状态");
+        System.out.println("6. 返回主菜单");
+        System.out.print("请选择: ");
+    }
+    
+    /**
+     * 处理命令
+     */
+    @Override
+    public void handleCommand(String command, Player player, Game game) {
+        switch(command) {
+            case "1":
+                startNewBattle(player, game);
+                break;
+            case "2":
+                performAttack(player);
+                break;
+            case "3":
+                performUltimate(player);
+                break;
+            case "4":
+                performDefend(player);
+                break;
+            case "5":
+                displayStatus(player);
+                break;
+            case "6":
+                endBattle(player);
+                game.switchToMainMenu();
+                break;
+            default:
+                System.out.println("无效的选择！");
+        }
+    }
+    
+    /**
+     * 开始新战斗
+     */
+    private void startNewBattle(Player player, Game game) {
+        if (player.getSelectedAgent() == null) {
+            System.out.println("请先选择英雄！返回训练场选择英雄。");
+            game.switchToTraining();
+            return;
+        }
+        
+        // 开始新战斗前重置玩家血量
+        player.resetForNewBattle();
+        
+        System.out.println("\n=== 选择敌人 ===");
+        System.out.println("1. 小怪 (100生命值)");
+        System.out.println("2. 中怪 (200生命值)");
+        System.out.println("3. 大怪 (500生命值)");
+        System.out.println("4. BOSS (1000生命值)");
+        System.out.print("请选择: ");
+        
+        String choice = scanner.nextLine();
+        switch(choice) {
+            case "1":
+                currentNPC = new NPC("小怪", 100);
+                break;
+            case "2":
+                currentNPC = new NPC("中怪", 200);
+                break;
+            case "3":
+                currentNPC = new NPC("大怪", 500);
+                break;
+            case "4":
+                currentNPC = new NPC("BOSS", 1000);
+                break;
+            default:
+                System.out.println("无效选择，默认选择小怪");
+                currentNPC = new NPC("小怪", 100);
+        }
+        
+        System.out.println("\n战斗开始！");
+        System.out.println("你面对的是: " + currentNPC.getName());
+        roundCount = 1;
+    }
+    
+    /**
+     * 执行普通攻击
+     */
+    private void performAttack(Player player) {
+        if (currentNPC == null) {
+            System.out.println("请先选择敌人！");
+            return;
+        }
+        
+        System.out.println("\n=== 你的回合 ===");
+        int damage = player.useSignatureSkill();
+        
+        if (damage > 0) {
+            currentNPC.takeDamage(damage);
+            checkBattleResult(player);
+        } else {
+            System.out.println("攻击失败！");
+        }
+        
+        // NPC回合
+        if (currentNPC != null && currentNPC.isAlive()) {
+            npcTurn(player);
+        }
+        
+        roundCount++;
+        player.updateAgentCooldowns();
+    }
+    
+    /**
+     * 执行大招
+     */
+    private void performUltimate(Player player) {
+        if (currentNPC == null) {
+            System.out.println("请先选择敌人！");
+            return;
+        }
+        
+        System.out.println("\n=== 你的回合 ===");
+        int damage = player.useUltimateSkill();
+        
+        if (damage > 0) {
+            currentNPC.takeDamage(damage);
+            checkBattleResult(player);
+        } else {
+            System.out.println("大招还在冷却中！");
+        }
+        
+        // NPC回合
+        if (currentNPC != null && currentNPC.isAlive()) {
+            npcTurn(player);
+        }
+        
+        roundCount++;
+        player.updateAgentCooldowns();
+    }
+    
+    /**
+     * 执行防御
+     */
+    private void performDefend(Player player) {
+        if (currentNPC == null) {
+            System.out.println("请先选择敌人！");
+            return;
+        }
+        
+        System.out.println("\n=== 你的回合 ===");
+        player.defend();
+        
+        // NPC回合
+        npcTurn(player);
+        
+        roundCount++;
+        player.updateAgentCooldowns();
+    }
+    
+    /**
+     * NPC的回合
+     */
+    private void npcTurn(Player player) {
+        if (currentNPC == null || !currentNPC.isAlive()) return;
+        
+        System.out.println("\n=== " + currentNPC.getName() + "的回合 ===");
+        int damage = currentNPC.act(player);
+        player.takeDamage(damage);
+        
+        if (!player.isAlive()) {
+            System.out.println("你被击败了！游戏结束。");
+            currentNPC = null;
+        }
+    }
+    
+    /**
+     * 检查战斗结果
+     */
+    private void checkBattleResult(Player player) {
+        if (currentNPC != null && !currentNPC.isAlive()) {
+            System.out.println("\n恭喜！你击败了 " + currentNPC.getName() + "！");
+            System.out.println("战斗结束，共进行了 " + (roundCount - 1) + " 回合");
+            currentNPC = null;
+        }
+    }
+    
+    /**
+     * 显示状态
+     */
+    private void displayStatus(Player player) {
+        player.displayInfo();
+        if (currentNPC != null) {
+            currentNPC.displayInfo();
+        }
+    }
+    
+    /**
+     * 结束战斗
+     */
+    private void endBattle(Player player) {
+        System.out.println("\n结束战斗...");
+        currentNPC = null;
+        roundCount = 1;
+    }
+}
+
+Game
+import java.util.Scanner;
+
+/**
+ * 游戏主控类
+ * 控制游戏的整体流程
+ */
+public class Game {
+    private Player player;           // 玩家对象
+    private Scene currentScene;      // 当前场景
+    private boolean isRunning;       // 游戏运行状态
+    private Scanner scanner;         // 输入扫描器
+    
+    // 游戏场景
+    private TrainingScene trainingScene;
+    private CombatScene combatScene;
+    
+    /**
+     * 构造函数
+     */
+    public Game() {
+        this.scanner = new Scanner(System.in);
+        this.isRunning = true;
+        
+        // 创建玩家（最大生命值200）
+        this.player = new Player("玩家", 200);
+        
+        // 创建场景
+        this.trainingScene = new TrainingScene();
+        this.combatScene = new CombatScene();
+        
+        // 设置初始场景
+        this.currentScene = null;
+    }
+    
+    /**
+     * 启动游戏
+     */
+    public void start() {
+        System.out.println("========== Vvvv Fight ==========");
+        System.out.println("欢迎来到 Vvvv Fight 游戏！");
+        
+        while (isRunning) {
+            if (currentScene == null) {
+                showMainMenu();
+            } else {
+                currentScene.displayOptions();
+                String command = scanner.nextLine();
+                currentScene.handleCommand(command, player, this);
+            }
+        }
+        
+        System.out.println("游戏结束，谢谢游玩！");
+        scanner.close();
+    }
+    
+    /**
+     * 显示主菜单
+     */
+    private void showMainMenu() {
+        System.out.println("\n=== 主菜单 ===");
+        System.out.println("1. 训练场");
+        System.out.println("2. 实战场景");
+        System.out.println("3. 查看玩家状态");
+        System.out.println("4. 重置玩家状态（满血）");
+        System.out.println("5. 退出游戏");
+        System.out.print("请选择: ");
+        
+        String choice = scanner.nextLine();
+        switch(choice) {
+            case "1":
+                switchToTraining();
+                break;
+            case "2":
+                switchToCombat();
+                break;
+            case "3":
+                player.displayInfo();
+                break;
+            case "4":
+                player.resetForNewBattle();
+                break;
+            case "5":
+                isRunning = false;
+                break;
+            default:
+                System.out.println("无效的选择！");
+        }
+    }
+    
+    /**
+     * 切换到训练场景
+     */
+    public void switchToTraining() {
+        currentScene = trainingScene;
+        trainingScene.enter();
+    }
+    
+    /**
+     * 切换到战斗场景
+     */
+    public void switchToCombat() {
+        currentScene = combatScene;
+        combatScene.enter();
+    }
+    
+    /**
+     * 切换到主菜单
+     */
+    public void switchToMainMenu() {
+        currentScene = null;
+        System.out.println("\n返回主菜单...");
+    }
+    
+    /**
+     * 主方法 - 游戏入口
+     */
+    public static void main(String[] args) {
+        Game game = new Game();
+        game.start();
+    }
+}
